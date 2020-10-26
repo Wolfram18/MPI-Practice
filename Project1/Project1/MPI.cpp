@@ -9,10 +9,10 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    //Функция Ring, проходит ring раз
-    //Выводятся итоговые значения на потоках
-    //Потом суммируются 
-    int ring = 2; //Число повторов
+    //Р¤СѓРЅРєС†РёСЏ Ring, РїСЂРѕС…РѕРґРёС‚ ring СЂР°Р·
+    //Р’С‹РІРѕРґСЏС‚СЃСЏ РёС‚РѕРіРѕРІС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РЅР° РїРѕС‚РѕРєР°С…
+    //РџРѕС‚РѕРј СЃСѓРјРјРёСЂСѓСЋС‚СЃСЏ 
+    int ring = 2; //Р§РёСЃР»Рѕ РїРѕРІС‚РѕСЂРѕРІ
     int ProcNum, ProcRank, ProcFrom, ProcTo;
     MPI_Status Status;
     //char mess[] = "abcdef";
@@ -20,107 +20,100 @@ int main(int argc, char* argv[])
     int mess = 0, recv = 0, sum = 0;
     int num[10];
 
-    //Инициализация среды
     MPI_Init(&argc, &argv);
-    //Определение кол-ва процессов
     MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-    //Определение ранга процесса
     MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
     if (ProcRank == 0)
     {
-        //Действия, выполняемые только процессом с рангом 0
+        //Р”РµР№СЃС‚РІРёСЏ, РІС‹РїРѕР»РЅСЏРµРјС‹Рµ С‚РѕР»СЊРєРѕ РїСЂРѕС†РµСЃСЃРѕРј СЃ СЂР°РЅРіРѕРј 0
         MPI_Send(&mess, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
         printf("\n Start send:  %d -> %d", ProcRank, 1);
     }
-    else //Сообщение, отправляемое всеми процессами, кроме процесса с рангом 0
+    else //РЎРѕРѕР±С‰РµРЅРёРµ, РѕС‚РїСЂР°РІР»СЏРµРјРѕРµ РІСЃРµРјРё РїСЂРѕС†РµСЃСЃР°РјРё, РєСЂРѕРјРµ РїСЂРѕС†РµСЃСЃР° СЃ СЂР°РЅРіРѕРј 0
     {
         for (int i = 0; i < ring; i++)
         {
-            //Не первый круг и 1-й процесс
             if (i > 0 && ProcRank == 1)
-                ProcFrom = ProcNum - 1; //От последнего 1-му
+                ProcFrom = ProcNum - 1; 
             else
-                ProcFrom = ProcRank - 1; //От предыдущих
+                ProcFrom = ProcRank - 1;
             MPI_Recv(&recv, 1, MPI_INT, ProcFrom, 0, MPI_COMM_WORLD, &Status);
             recv++;
             printf("\n Recv[%d]:  %d -> %d, %d+1", i, ProcFrom, ProcRank, recv - 1);
 
-            //Если последний процесс
             if (ProcRank == ProcNum - 1)
-                ProcTo = 1; //От последнего 1-му
+                ProcTo = 1;
             else
-                ProcTo = ProcRank + 1; //Иначе следующему
+                ProcTo = ProcRank + 1;
             MPI_Send(&recv, 1, MPI_INT, ProcTo, 0, MPI_COMM_WORLD);
             printf("\n Send[%d]:  %d -> %d", i, ProcRank, ProcTo);
         }
     }
 
-    // Собираем последние результаты на процессах
+    //РЎРѕР±РёСЂР°РµРј РїРѕСЃР»РµРґРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚С‹ РЅР° РїСЂРѕС†РµСЃСЃР°С…
     MPI_Gather(&recv, 1, MPI_INT, &num, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    // Ждем все процессы
+    //Р–РґРµРј РІСЃРµ РїСЂРѕС†РµСЃСЃС‹
     MPI_Barrier(MPI_COMM_WORLD);
     printf("\n Result: ");
     if (ProcRank == 0)
         for (int i = 0; i < ProcNum; i++)
             printf("%d, ", num[i]);
 
-    // Суммируем последние результаты на процессах
+    //РЎСѓРјРјРёСЂСѓРµРј РїРѕСЃР»РµРґРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚С‹ РЅР° РїСЂРѕС†РµСЃСЃР°С…
     MPI_Reduce(&recv, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    // Ждем все процессы
     MPI_Barrier(MPI_COMM_WORLD);
     if (ProcRank == 0)
         printf("\n Result = %d", sum);
 
-    //Завершение
     MPI_Finalize();
     return 0;
 
-    //Функция Ring: 0 --> 1, 1-->2, 2-->3 и т.д. --> 1
-    //И так ring раз
-    /*int ring = 2; //Число повторов
+    //Р¤СѓРЅРєС†РёСЏ Ring: 0 --> 1, 1-->2, 2-->3 Рё С‚.Рґ. --> 1
+    //Р С‚Р°Рє ring СЂР°Р·
+    /*int ring = 2; //Р§РёСЃР»Рѕ РїРѕРІС‚РѕСЂРѕРІ
     int ProcNum, ProcRank, ProcFrom, ProcTo;
     MPI_Status Status;
     char mess[] = "abcdef";
     char recv[10];
     //int mess = 5, recv = 0;
 
-    //Инициализация среды
+    //РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃСЂРµРґС‹
     MPI_Init(&argc, &argv);
-    //Определение кол-ва процессов
+    //РћРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»-РІР° РїСЂРѕС†РµСЃСЃРѕРІ
     MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-    //Определение ранга процесса
+    //РћРїСЂРµРґРµР»РµРЅРёРµ СЂР°РЅРіР° РїСЂРѕС†РµСЃСЃР°
     MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
     if (ProcRank == 0)
     {
-        //Действия, выполняемые только процессом с рангом 0
+        //Р”РµР№СЃС‚РІРёСЏ, РІС‹РїРѕР»РЅСЏРµРјС‹Рµ С‚РѕР»СЊРєРѕ РїСЂРѕС†РµСЃСЃРѕРј СЃ СЂР°РЅРіРѕРј 0
         MPI_Send(&mess, _countof(mess), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
         printf("\n Start send:  %d -> %d", ProcRank, 1);
     }
-    else //Сообщение, отправляемое всеми процессами, кроме процесса с рангом 0
+    else //РЎРѕРѕР±С‰РµРЅРёРµ, РѕС‚РїСЂР°РІР»СЏРµРјРѕРµ РІСЃРµРјРё РїСЂРѕС†РµСЃСЃР°РјРё, РєСЂРѕРјРµ РїСЂРѕС†РµСЃСЃР° СЃ СЂР°РЅРіРѕРј 0
     {
         for (int i = 0; i < ring; i++)
         {
-            //Не первый круг и 1-й процесс
+            //РќРµ РїРµСЂРІС‹Р№ РєСЂСѓРі Рё 1-Р№ РїСЂРѕС†РµСЃСЃ
             if (i > 0 && ProcRank == 1)
-                ProcFrom = ProcNum - 1; //От последнего 1-му
+                ProcFrom = ProcNum - 1; //РћС‚ РїРѕСЃР»РµРґРЅРµРіРѕ 1-РјСѓ
             else
-                ProcFrom = ProcRank - 1; //От предыдущих
+                ProcFrom = ProcRank - 1; //РћС‚ РїСЂРµРґС‹РґСѓС‰РёС…
             MPI_Recv(&recv, _countof(recv), MPI_CHAR, ProcFrom, 0, MPI_COMM_WORLD, &Status);
             printf("\n Recv[%d]:  %d -> %d, %s", i, ProcFrom, ProcRank, recv);
 
-            //Если последний процесс
+            //Р•СЃР»Рё РїРѕСЃР»РµРґРЅРёР№ РїСЂРѕС†РµСЃСЃ
             if (ProcRank == ProcNum - 1)
-                ProcTo = 1; //От последнего 1-му
+                ProcTo = 1; //РћС‚ РїРѕСЃР»РµРґРЅРµРіРѕ 1-РјСѓ
             else
-                ProcTo = ProcRank + 1; //Иначе следующему
+                ProcTo = ProcRank + 1; //РРЅР°С‡Рµ СЃР»РµРґСѓСЋС‰РµРјСѓ
             MPI_Send(&recv, _countof(recv), MPI_CHAR, ProcTo, 0, MPI_COMM_WORLD);
             printf("\n Send[%d]:  %d -> %d", i, ProcRank, ProcTo);
         }
     }
     printf("\n");
-    //Завершение
+    //Р—Р°РІРµСЂС€РµРЅРёРµ
     MPI_Finalize();
     return 0;*/
 }
