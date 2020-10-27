@@ -43,8 +43,8 @@ void MultiplicationMatrix(struct Complex* A, struct Complex* B, Complex* D, int 
 
 int main(int argc, char* argv[])
 {
-	//Умножение комплексных матриц
-	int N = 3, A = 10; // N - размер матрицы, А - кол-во матриц
+	//РЈРјРЅРѕР¶РµРЅРёРµ РєРѕРјРїР»РµРєСЃРЅС‹С… РјР°С‚СЂРёС†
+	int N = 3, A = 10; // N - СЂР°Р·РјРµСЂ РјР°С‚СЂРёС†С‹, Рђ - РєРѕР»-РІРѕ РјР°С‚СЂРёС†
 	int pair = A / 2 + 1;
 	bool even = 1;
 	if (A % 2 == 1)
@@ -57,11 +57,11 @@ int main(int argc, char* argv[])
 
 	int ProcNum, ProcRank;
 	MPI_Status Status;
-	//Инициализация среды
+	//РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃСЂРµРґС‹
 	MPI_Init(&argc, &argv);
-	//Определение кол-ва процессов
+	//РћРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»-РІР° РїСЂРѕС†РµСЃСЃРѕРІ
 	MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-	//Определение ранга процесса
+	//РћРїСЂРµРґРµР»РµРЅРёРµ СЂР°РЅРіР° РїСЂРѕС†РµСЃСЃР°
 	MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
 	if (ProcNum < pair)
@@ -74,46 +74,46 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	// Структурный способ конструирования производного типа
-	// Кол-во блоков
+	// РЎС‚СЂСѓРєС‚СѓСЂРЅС‹Р№ СЃРїРѕСЃРѕР± РєРѕРЅСЃС‚СЂСѓРёСЂРѕРІР°РЅРёСЏ РїСЂРѕРёР·РІРѕРґРЅРѕРіРѕ С‚РёРїР°
+	// РљРѕР»-РІРѕ Р±Р»РѕРєРѕРІ
 	int const count = 2;
-	// Кол-во элементов в каждом блоке
+	// РљРѕР»-РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ РєР°Р¶РґРѕРј Р±Р»РѕРєРµ
 	int blocklens[count];
 	blocklens[0] = 1;
 	blocklens[1] = 1;
-	// Смещение каждого блока от начала типа
+	// РЎРјРµС‰РµРЅРёРµ РєР°Р¶РґРѕРіРѕ Р±Р»РѕРєР° РѕС‚ РЅР°С‡Р°Р»Р° С‚РёРїР°
 	MPI_Aint indices[count];
-	// Получение адреса переменных
+	// РџРѕР»СѓС‡РµРЅРёРµ Р°РґСЂРµСЃР° РїРµСЂРµРјРµРЅРЅС‹С…
 	Complex Matrix;
 	MPI_Address(&Matrix.Re, &indices[0]);
 	MPI_Address(&Matrix.Im, &indices[1]);
 	indices[1] = indices[1] - indices[0];
 	indices[0] = 0;
-	// Исходные типы
+	// РСЃС…РѕРґРЅС‹Рµ С‚РёРїС‹
 	MPI_Datatype old_types[count];
 	old_types[0] = MPI_INT;
 	old_types[1] = MPI_INT;
-	// Новый тип
+	// РќРѕРІС‹Р№ С‚РёРї
 	MPI_Datatype complex_type;
-	// Создание
+	// РЎРѕР·РґР°РЅРёРµ
 	MPI_Type_struct(count, blocklens, indices, old_types, &complex_type);
-	// Объявление
+	// РћР±СЉСЏРІР»РµРЅРёРµ
 	MPI_Type_commit(&complex_type);
 
-	// Получить группу, связанную с существующим коммуникатором
+	// РџРѕР»СѓС‡РёС‚СЊ РіСЂСѓРїРїСѓ, СЃРІСЏР·Р°РЅРЅСѓСЋ СЃ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРј РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂРѕРј
 	MPI_Group group;
 	MPI_Comm_group(MPI_COMM_WORLD, &group);
-	// Создать новую группу из процессов с рангами ranks
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РіСЂСѓРїРїСѓ РёР· РїСЂРѕС†РµСЃСЃРѕРІ СЃ СЂР°РЅРіР°РјРё ranks
 	int* ranks = new int[pair];
 	for (int i = 0; i < pair; i++)
 		ranks[i] = i;
 	MPI_Group complex_group;
 	MPI_Group_incl(group, pair, ranks, &complex_group);
-	// Создать новый коммуникатор
+	// РЎРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂ
 	MPI_Comm COMM;
 	MPI_Comm_create(MPI_COMM_WORLD, complex_group, &COMM);
 
-	// Заполнение матрицы и рассылка всем процессам
+	// Р—Р°РїРѕР»РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ Рё СЂР°СЃСЃС‹Р»РєР° РІСЃРµРј РїСЂРѕС†РµСЃСЃР°Рј
 	if (ProcRank == 0)
 	{
 		printf("  Matrix %d*%d (%d)\n", N, N, A);
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(matrix1, N * N, complex_type, 0, MPI_COMM_WORLD);
 
-	// Подсчёт на процессах
+	// РџРѕРґСЃС‡С‘С‚ РЅР° РїСЂРѕС†РµСЃСЃР°С…
 	if (ProcRank >= 1 && ProcRank < pair)
 	{
 		MultiplicationMatrix(matrix1, matrix1, matrix2, N);
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	// Сбор результирующих матриц на 0м процессе
+	// РЎР±РѕСЂ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёС… РјР°С‚СЂРёС† РЅР° 0Рј РїСЂРѕС†РµСЃСЃРµ
 	if (ProcRank >= 0 && ProcRank < pair)
 	{
 		MPI_Gather(matrix2, N * N, complex_type, array, N * N, complex_type, 0, COMM);
@@ -143,27 +143,27 @@ int main(int argc, char* argv[])
 
 	if (ProcRank == 0)
 	{
-		// Если А - чётное
+		// Р•СЃР»Рё Рђ - С‡С‘С‚РЅРѕРµ
 		if (even)
 		{
 			for (int i = 0; i < N * N; i++)
 			{
-				// Пропускаем матрицу, пришедшую с 0го процесса
+				// РџСЂРѕРїСѓСЃРєР°РµРј РјР°С‚СЂРёС†Сѓ, РїСЂРёС€РµРґС€СѓСЋ СЃ 0РіРѕ РїСЂРѕС†РµСЃСЃР°
 				matrix1[i].Re = array[N * N + i].Re;
 				matrix1[i].Im = array[N * N + i].Im;
 			}
 		}
-		else // Добавляем нечётную
+		else // Р”РѕР±Р°РІР»СЏРµРј РЅРµС‡С‘С‚РЅСѓСЋ
 		{
 			for (int i = 0; i < N * N; i++)
 			{
-				// Пришедшую с 0го процесса
+				// РџСЂРёС€РµРґС€СѓСЋ СЃ 0РіРѕ РїСЂРѕС†РµСЃСЃР°
 				matrix1[i].Re = array[i].Re;
 				matrix1[i].Im = array[i].Im;
 			}
 		}
 
-		// Перемножаем результирующие матрицы
+		// РџРµСЂРµРјРЅРѕР¶Р°РµРј СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёРµ РјР°С‚СЂРёС†С‹
 		for (int i = even + 1; i < pair; i++)
 		{
 			for (int j = 0; j < N * N; j++)
@@ -183,16 +183,16 @@ int main(int argc, char* argv[])
 			for (int j = 0; j < N; j++)
 				printf("  Re,Im[%d] - (%d,%d)\n", i * N + j, matrix1[i * N + j].Re, matrix1[i * N + j].Im);
 
-		// Аннулирование производного типа
+		// РђРЅРЅСѓР»РёСЂРѕРІР°РЅРёРµ РїСЂРѕРёР·РІРѕРґРЅРѕРіРѕ С‚РёРїР°
 		MPI_Type_free(&complex_type);
-		// Удаление групп
+		// РЈРґР°Р»РµРЅРёРµ РіСЂСѓРїРї
 		MPI_Group_free(&group);
 		MPI_Group_free(&complex_group);
-		// Удаление коммуникатора
+		// РЈРґР°Р»РµРЅРёРµ РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂР°
 		MPI_Comm_free(&COMM);
 	}
 
-	// Завершение
+	// Р—Р°РІРµСЂС€РµРЅРёРµ
 	MPI_Finalize();
 	delete[] matrix1;
 	delete[] matrix2;
