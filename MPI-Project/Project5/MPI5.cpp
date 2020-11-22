@@ -4,15 +4,15 @@
 #include <stdio.h>
 #include "mpi.h"
 
-#define BASE 10 // Система счисления
-#define MIN_LENGTH_FOR_KARATSUBA 4 // Числа короче умножаются квадратичным алгоритмом
+#define BASE 10 // РЎРёСЃС‚РµРјР° СЃС‡РёСЃР»РµРЅРёСЏ
+#define MIN_LENGTH_FOR_KARATSUBA 4 // Р§РёСЃР»Р° РєРѕСЂРѕС‡Рµ СѓРјРЅРѕР¶Р°СЋС‚СЃСЏ РєРІР°РґСЂР°С‚РёС‡РЅС‹Рј Р°Р»РіРѕСЂРёС‚РјРѕРј
 
 using namespace std;
 
 int* sum(int* a, int size_a, int* b, int size_b) {
-    // Функция для суммирования двух длинных чисел
-    // Более длинное передется в качестве первого аргумента
-    // Возвращает ненормализованное число
+    // Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЃСѓРјРјРёСЂРѕРІР°РЅРёСЏ РґРІСѓС… РґР»РёРЅРЅС‹С… С‡РёСЃРµР»
+    // Р‘РѕР»РµРµ РґР»РёРЅРЅРѕРµ РїРµСЂРµРґРµС‚СЃСЏ РІ РєР°С‡РµСЃС‚РІРµ РїРµСЂРІРѕРіРѕ Р°СЂРіСѓРјРµРЅС‚Р°
+    // Р’РѕР·РІСЂР°С‰Р°РµС‚ РЅРµРЅРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅРѕРµ С‡РёСЃР»Рѕ
     int* s = new int[size_a + 1];
     s[size_a - 1] = a[size_a - 1];
     s[size_a] = 0;
@@ -22,24 +22,24 @@ int* sum(int* a, int size_a, int* b, int size_b) {
 }
 
 int* sub(int* a, int* b, int size_b) {
-    // Функция для вычитания одного длинного числа из другого
-    // Изменяет содержимое первого числа
-    // Возвращает ненормализованное число
+    // Р¤СѓРЅРєС†РёСЏ РґР»СЏ РІС‹С‡РёС‚Р°РЅРёСЏ РѕРґРЅРѕРіРѕ РґР»РёРЅРЅРѕРіРѕ С‡РёСЃР»Р° РёР· РґСЂСѓРіРѕРіРѕ
+    // РР·РјРµРЅСЏРµС‚ СЃРѕРґРµСЂР¶РёРјРѕРµ РїРµСЂРІРѕРіРѕ С‡РёСЃР»Р°
+    // Р’РѕР·РІСЂР°С‰Р°РµС‚ РЅРµРЅРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅРѕРµ С‡РёСЃР»Рѕ
     for (int i = 0; i < size_b; ++i)
         a[i] -= b[i];
     return a;
 }
 
 void normalize(int* l, int size_l) {
-    // Нормализация числа,
-    // т.е. приведение каждого разряда в соответствие с системой счисления
+    // РќРѕСЂРјР°Р»РёР·Р°С†РёСЏ С‡РёСЃР»Р°,
+    // С‚.Рµ. РїСЂРёРІРµРґРµРЅРёРµ РєР°Р¶РґРѕРіРѕ СЂР°Р·СЂСЏРґР° РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ СЃ СЃРёСЃС‚РµРјРѕР№ СЃС‡РёСЃР»РµРЅРёСЏ
     for (int i = 0; i < size_l - 1; ++i) {
-        if (l[i] >= BASE) { // если число больше максимального, то организовавается перенос
+        if (l[i] >= BASE) { // РµСЃР»Рё С‡РёСЃР»Рѕ Р±РѕР»СЊС€Рµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ, С‚Рѕ РѕСЂРіР°РЅРёР·РѕРІР°РІР°РµС‚СЃСЏ РїРµСЂРµРЅРѕСЃ
             int carryover = l[i] / BASE;
             l[i + 1] += carryover;
             l[i] -= carryover * BASE;
         }
-        else if (l[i] < 0) { // если меньше - заем
+        else if (l[i] < 0) { // РµСЃР»Рё РјРµРЅСЊС€Рµ - Р·Р°РµРј
             int carryover = (l[i] + 1) / BASE - 1;
             l[i + 1] += carryover;
             l[i] -= carryover * BASE;
@@ -48,10 +48,10 @@ void normalize(int* l, int size_l) {
 }
 
 int* karatsuba(int* a, int size_a, int* b, int size_b) {
-    // Результирующее произведение
+    // Р РµР·СѓР»СЊС‚РёСЂСѓСЋС‰РµРµ РїСЂРѕРёР·РІРµРґРµРЅРёРµ
     int* product = new int[size_a + size_b];
 
-    // Если число короче то применяем наивное умножение
+    // Р•СЃР»Рё С‡РёСЃР»Рѕ РєРѕСЂРѕС‡Рµ С‚Рѕ РїСЂРёРјРµРЅСЏРµРј РЅР°РёРІРЅРѕРµ СѓРјРЅРѕР¶РµРЅРёРµ
     if (size_a < MIN_LENGTH_FOR_KARATSUBA) {
         memset(product, 0, sizeof(int) * (size_a + size_b));
         for (int i = 0; i < size_a; ++i)
@@ -59,42 +59,42 @@ int* karatsuba(int* a, int size_a, int* b, int size_b) {
                 product[i + j] += a[i] * b[j];
             }
     }
-    else { // Умножение методом Карацубы
-        // Младшая часть числа a
+    else { // РЈРјРЅРѕР¶РµРЅРёРµ РјРµС‚РѕРґРѕРј РљР°СЂР°С†СѓР±С‹
+        // РњР»Р°РґС€Р°СЏ С‡Р°СЃС‚СЊ С‡РёСЃР»Р° a
         int* a_part1 = a;
         int a_part1_size = (size_a + 1) / 2;
 
-        // Старшая часть числа a
+        // РЎС‚Р°СЂС€Р°СЏ С‡Р°СЃС‚СЊ С‡РёСЃР»Р° a
         int* a_part2 = a + a_part1_size;
         int a_part2_size = (size_a) / 2;
 
-        // Младшая часть числа b
+        // РњР»Р°РґС€Р°СЏ С‡Р°СЃС‚СЊ С‡РёСЃР»Р° b
         int* b_part1 = b;
         int b_part1_size = (size_b + 1) / 2;
 
-        // Старшая часть числа b
+        // РЎС‚Р°СЂС€Р°СЏ С‡Р°СЃС‚СЊ С‡РёСЃР»Р° b
         int* b_part2 = b + b_part1_size;
         int b_part2_size = (size_b) / 2;
 
-        int* sum_of_a_parts = sum(a_part1, a_part1_size, a_part2, a_part2_size); // cумма частей числа a
+        int* sum_of_a_parts = sum(a_part1, a_part1_size, a_part2, a_part2_size); // cСѓРјРјР° С‡Р°СЃС‚РµР№ С‡РёСЃР»Р° a
         normalize(sum_of_a_parts, a_part1_size + 1);
-        int* sum_of_b_parts = sum(b_part1, b_part1_size, b_part2, b_part2_size); // cумма частей числа b
+        int* sum_of_b_parts = sum(b_part1, b_part1_size, b_part2, b_part2_size); // cСѓРјРјР° С‡Р°СЃС‚РµР№ С‡РёСЃР»Р° b
         normalize(sum_of_b_parts, b_part1_size + 1);
-        // Произведение сумм частей
+        // РџСЂРѕРёР·РІРµРґРµРЅРёРµ СЃСѓРјРј С‡Р°СЃС‚РµР№
         int* product_of_sums_of_parts = karatsuba(sum_of_a_parts, a_part1_size + 1, sum_of_b_parts, b_part1_size + 1);
 
-        // Нахождение суммы средних членов
-        int* product_of_first_parts = karatsuba(a_part1, a_part1_size, b_part1, b_part1_size); // младший член
-        int* product_of_second_parts = karatsuba(a_part2, a_part2_size, b_part2, b_part2_size); // старший член
+        // РќР°С…РѕР¶РґРµРЅРёРµ СЃСѓРјРјС‹ СЃСЂРµРґРЅРёС… С‡Р»РµРЅРѕРІ
+        int* product_of_first_parts = karatsuba(a_part1, a_part1_size, b_part1, b_part1_size); // РјР»Р°РґС€РёР№ С‡Р»РµРЅ
+        int* product_of_second_parts = karatsuba(a_part2, a_part2_size, b_part2, b_part2_size); // СЃС‚Р°СЂС€РёР№ С‡Р»РµРЅ
         int* sum_of_middle_terms = sub(sub(product_of_sums_of_parts, product_of_first_parts, a_part1_size + b_part1_size), product_of_second_parts, a_part2_size + b_part2_size);
 
-        // Суммирование многочлена
+        // РЎСѓРјРјРёСЂРѕРІР°РЅРёРµ РјРЅРѕРіРѕС‡Р»РµРЅР°
         memcpy(product, product_of_first_parts, (a_part1_size + b_part1_size) * sizeof(int));
         memcpy(product + (a_part1_size + b_part1_size), product_of_second_parts, (a_part2_size + b_part2_size) * sizeof(int));
         for (int i = 0; i < (a_part1_size + 1 + b_part1_size + 1); ++i)
             product[a_part1_size + i] += sum_of_middle_terms[i];
 
-        // Зачистка
+        // Р—Р°С‡РёСЃС‚РєР°
         delete[] sum_of_a_parts;
         delete[] sum_of_b_parts;
         delete[] product_of_sums_of_parts;
@@ -102,26 +102,26 @@ int* karatsuba(int* a, int size_a, int* b, int size_b) {
         delete[] product_of_second_parts;
     }
 
-    normalize(product, size_a + size_b); // Конечная нормализация числа
+    normalize(product, size_a + size_b); // РљРѕРЅРµС‡РЅР°СЏ РЅРѕСЂРјР°Р»РёР·Р°С†РёСЏ С‡РёСЃР»Р°
 
     return product;
 }
 
 int main(int argc, char* argv[])
 {
-    //Умножение длинных чисел
-    const int N = 4, A = 8; // длина и кол-во чисел
+    //РЈРјРЅРѕР¶РµРЅРёРµ РґР»РёРЅРЅС‹С… С‡РёСЃРµР»
+    const int N = 4, A = 8; // РґР»РёРЅР° Рё РєРѕР»-РІРѕ С‡РёСЃРµР»
     const int pair = A / 2 + 1;
     bool even = 1;
     if (A % 2 == 1)
         even = 0;
 
-    int array[N]; // число, которое будем рассылать
-    int* result = new int[N + N]; // результат умножения на потоках
-    int temp_res1[N]; // 1 половина для сбора на 0м процессе
-    int temp_res2[N]; // 2 половина для сбора на 0м процессе
-    int res_array1[N * pair]; // все 1 половины
-    int res_array2[N * pair]; // все 2 половины
+    int array[N]; // С‡РёСЃР»Рѕ, РєРѕС‚РѕСЂРѕРµ Р±СѓРґРµРј СЂР°СЃСЃС‹Р»Р°С‚СЊ
+    int* result = new int[N + N]; // СЂРµР·СѓР»СЊС‚Р°С‚ СѓРјРЅРѕР¶РµРЅРёСЏ РЅР° РїРѕС‚РѕРєР°С…
+    int temp_res1[N]; // 1 РїРѕР»РѕРІРёРЅР° РґР»СЏ СЃР±РѕСЂР° РЅР° 0Рј РїСЂРѕС†РµСЃСЃРµ
+    int temp_res2[N]; // 2 РїРѕР»РѕРІРёРЅР° РґР»СЏ СЃР±РѕСЂР° РЅР° 0Рј РїСЂРѕС†РµСЃСЃРµ
+    int res_array1[N * pair]; // РІСЃРµ 1 РїРѕР»РѕРІРёРЅС‹
+    int res_array2[N * pair]; // РІСЃРµ 2 РїРѕР»РѕРІРёРЅС‹
 
     int* temp1 = new int[N + N];
     int* temp2 = new int[N + N];
@@ -129,11 +129,11 @@ int main(int argc, char* argv[])
 
     int ProcNum, ProcRank;
     MPI_Status Status;
-    //Инициализация среды
+    //РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃСЂРµРґС‹
     MPI_Init(&argc, &argv);
-    //Определение кол-ва процессов
+    //РћРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»-РІР° РїСЂРѕС†РµСЃСЃРѕРІ
     MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-    //Определение ранга процесса
+    //РћРїСЂРµРґРµР»РµРЅРёРµ СЂР°РЅРіР° РїСЂРѕС†РµСЃСЃР°
     MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
     if (ProcNum < pair)
@@ -145,25 +145,25 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // Новый тип type
+    // РќРѕРІС‹Р№ С‚РёРї type
     MPI_Datatype type;
     MPI_Type_contiguous(N, MPI_INT, &type);
     MPI_Type_commit(&type);
 
-    // Получить группу, связанную с существующим коммуникатором
+    // РџРѕР»СѓС‡РёС‚СЊ РіСЂСѓРїРїСѓ, СЃРІСЏР·Р°РЅРЅСѓСЋ СЃ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРј РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂРѕРј
     MPI_Group group;
     MPI_Comm_group(MPI_COMM_WORLD, &group);
-    // Создать новую группу из процессов с рангами ranks
+    // РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РіСЂСѓРїРїСѓ РёР· РїСЂРѕС†РµСЃСЃРѕРІ СЃ СЂР°РЅРіР°РјРё ranks
     int* ranks = new int[pair];
     for (int i = 0; i < pair; i++)
         ranks[i] = i;
     MPI_Group my_group;
     MPI_Group_incl(group, pair, ranks, &my_group);
-    // Создать новый коммуникатор
+    // РЎРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂ
     MPI_Comm COMM;
     MPI_Comm_create(MPI_COMM_WORLD, my_group, &COMM);
 
-    // Заполнение числа и рассылка всем процессам
+    // Р—Р°РїРѕР»РЅРµРЅРёРµ С‡РёСЃР»Р° Рё СЂР°СЃСЃС‹Р»РєР° РІСЃРµРј РїСЂРѕС†РµСЃСЃР°Рј
     if (ProcRank == 0)
     {
         for (int i = 0; i < N; i++)
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Bcast(array, 1, type, 0, MPI_COMM_WORLD);
 
-    // Подсчёт на процессах
+    // РџРѕРґСЃС‡С‘С‚ РЅР° РїСЂРѕС†РµСЃСЃР°С…
     if (ProcRank >= 1 && ProcRank < pair)
     {
         result = karatsuba(array, N, array, N);
@@ -188,20 +188,20 @@ int main(int argc, char* argv[])
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // Сбор результирующих чисел на 0м процессе
+    // РЎР±РѕСЂ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёС… С‡РёСЃРµР» РЅР° 0Рј РїСЂРѕС†РµСЃСЃРµ
     if (ProcRank >= 0 && ProcRank < pair)
     {
         MPI_Gather(temp_res1, 1, type, res_array1, 1, type, 0, COMM);
         MPI_Gather(temp_res2, 1, type, res_array2, 1, type, 0, COMM);
     }
 
-    // Остаточный подсчёт на 0м процессе
+    // РћСЃС‚Р°С‚РѕС‡РЅС‹Р№ РїРѕРґСЃС‡С‘С‚ РЅР° 0Рј РїСЂРѕС†РµСЃСЃРµ
     if (ProcRank == 0)
     {
         int size1 = N + N;
-        if (even) // Если А - чётное
+        if (even) // Р•СЃР»Рё Рђ - С‡С‘С‚РЅРѕРµ
         {
-            // Пропускаем число, пришедшее с 0го процесса
+            // РџСЂРѕРїСѓСЃРєР°РµРј С‡РёСЃР»Рѕ, РїСЂРёС€РµРґС€РµРµ СЃ 0РіРѕ РїСЂРѕС†РµСЃСЃР°
             for (int i = 0; i < N; i++)
                 temp1[i] = res_array1[i + N];
             for (int i = N; i < N + N; i++)
@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
             /*for (int i = 0; i < N + N; i++)
                 printf("[%d]", temp1[i]);*/
         }
-        else // Добавляем нечётное
+        else // Р”РѕР±Р°РІР»СЏРµРј РЅРµС‡С‘С‚РЅРѕРµ
         {
             for (int i = 0; i < N; i++)
                 temp1[i] = array[i];
@@ -224,14 +224,14 @@ int main(int argc, char* argv[])
         for (int i = N; i < N + N; i++)
             temp2[i] = temp2[i] = res_array2[i];
 
-        // Перемножаем результирующие числа
+        // РџРµСЂРµРјРЅРѕР¶Р°РµРј СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РёРµ С‡РёСЃР»Р°
         for (int i = even + 1; i < pair; i++)
         {
             printf(" \n A:");
             for (int i = size1 - 1; i >= 0; i--)
                 printf("[%d]", temp1[i]);
 
-            // Дополняем нулями
+            // Р”РѕРїРѕР»РЅСЏРµРј РЅСѓР»СЏРјРё
             if (N + N < size1)
             {
                 temp2 = new int[size1];
@@ -257,7 +257,7 @@ int main(int argc, char* argv[])
             for (int i = 2 * size1 - 1; i >= 0; i--)
                 printf("[%d]", temp1[i]);*/
 
-            // Подчищаем нули
+            // РџРѕРґС‡РёС‰Р°РµРј РЅСѓР»Рё
             while (temp3[2 * size1 - 1] == 0 && temp3[2 * size1 - 2] == 0)
             {
                 size1--;
@@ -274,16 +274,16 @@ int main(int argc, char* argv[])
             size1 += size1;
         }
 
-        // Аннулирование производного типа
+        // РђРЅРЅСѓР»РёСЂРѕРІР°РЅРёРµ РїСЂРѕРёР·РІРѕРґРЅРѕРіРѕ С‚РёРїР°
         MPI_Type_free(&type);
-        // Удаление групп
+        // РЈРґР°Р»РµРЅРёРµ РіСЂСѓРїРї
         MPI_Group_free(&group);
         MPI_Group_free(&my_group);
-        // Удаление коммуникатора
+        // РЈРґР°Р»РµРЅРёРµ РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂР°
         MPI_Comm_free(&COMM);
     }
 
-    // Завершение
+    // Р—Р°РІРµСЂС€РµРЅРёРµ
     delete[] ranks;
     delete[] result;
     delete[] temp1;
