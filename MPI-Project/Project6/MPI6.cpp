@@ -122,29 +122,29 @@ vecint fft_mul(vecint a, vecint b)
 
 int main(int argc, char* argv[])
 {
-    // Умножение длинных чисел
-    const int N = 4, A = 9; // длина и кол-во чисел
+    // РЈРјРЅРѕР¶РµРЅРёРµ РґР»РёРЅРЅС‹С… С‡РёСЃРµР»
+    const int N = 4, A = 9; // РґР»РёРЅР° Рё РєРѕР»-РІРѕ С‡РёСЃРµР»
     const int pair = A / 2;
     bool even = 1;
     if (A % 2 == 1)
         even = 0;
 
-    int* array = new int[N]; // число, которое будем рассылать
-    vecint a, b, c; // для промежуточных вычислений
-    int* result1 = new int[N]; // на 1м потоке
-    int* result2 = new int[N]; // на 2м потоке
+    int* array = new int[N]; // С‡РёСЃР»Рѕ, РєРѕС‚РѕСЂРѕРµ Р±СѓРґРµРј СЂР°СЃСЃС‹Р»Р°С‚СЊ
+    vecint a, b, c; // РґР»СЏ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅС‹С… РІС‹С‡РёСЃР»РµРЅРёР№
+    int* result1 = new int[N]; // РЅР° 1Рј РїРѕС‚РѕРєРµ
+    int* result2 = new int[N]; // РЅР° 2Рј РїРѕС‚РѕРєРµ
     int size1 = 0, size2 = 0;
 
     int ProcNum, ProcRank;
     MPI_Status Status;
-    // Инициализация среды
+    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃСЂРµРґС‹
     MPI_Init(&argc, &argv);
-    // Определение кол-ва процессов
+    // РћРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»-РІР° РїСЂРѕС†РµСЃСЃРѕРІ
     MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-    // Определение ранга процесса
+    // РћРїСЂРµРґРµР»РµРЅРёРµ СЂР°РЅРіР° РїСЂРѕС†РµСЃСЃР°
     MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
-    // Создание двухмерной решетки 2x2
+    // РЎРѕР·РґР°РЅРёРµ РґРІСѓС…РјРµСЂРЅРѕР№ СЂРµС€РµС‚РєРё 2x2
     MPI_Comm GridComm;
     const int ndims = 2;
     int dims[ndims], periodic[ndims], reorder = 1, maxdims = 2;
@@ -161,14 +161,14 @@ int main(int argc, char* argv[])
             printf("#%d - (%d, %d)\n", rank, coords[rank][0], coords[rank][1]);
         }
 
-        // Заполнение числа и рассылка процессам
+        // Р—Р°РїРѕР»РЅРµРЅРёРµ С‡РёСЃР»Р° Рё СЂР°СЃСЃС‹Р»РєР° РїСЂРѕС†РµСЃСЃР°Рј
         for (int i = 0; i < N; i++)
             array[i] = 5; // + rand() % 5;
     }
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Bcast(array, N, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (ProcRank == 1 || ProcRank == 2) // (0,1) и (1,0)
+    if (ProcRank == 1 || ProcRank == 2) // (0,1) Рё (1,0)
     {
         size1 = N;
 
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
         
         if (ProcRank == 2) // (1,0)
         {
-            if (!even) // нечётная
+            if (!even) // РЅРµС‡С‘С‚РЅР°СЏ
             {
                 c = fft_mul(a, b);
                 for (int i = c.size() - 1; i >= 0; i--)
@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
     {
         printf("#%d - result multy", ProcRank);
         
-        // С (0,1)
+        // РЎ (0,1)
         MPI_Recv(&size1, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, &Status);
         result1 = new int[size1];
         MPI_Recv(result1, size1, MPI_INT, 1, 0, MPI_COMM_WORLD, &Status);
@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
         for (int i = size1 - 1; i >= 0; i--)
             printf("[%d]", result1[i]);
 
-        // С (1,0)
+        // РЎ (1,0)
         MPI_Recv(&size2, 1, MPI_INT, 2, 0, MPI_COMM_WORLD, &Status);
         result2 = new int[size2];
         MPI_Recv(result2, size2, MPI_INT, 2, 0, MPI_COMM_WORLD, &Status);
@@ -249,7 +249,7 @@ int main(int argc, char* argv[])
             printf("[%d]", c[i]);
         printf("\n");
 
-        // Удаление коммуникатора
+        // РЈРґР°Р»РµРЅРёРµ РєРѕРјРјСѓРЅРёРєР°С‚РѕСЂР°
         MPI_Comm_free(&GridComm);
     }
 
