@@ -109,7 +109,7 @@ int* karatsuba(int* a, int size_a, int* b, int size_b) {
 
 int main(int argc, char* argv[])
 {
-    //Умножение длинных чисел
+    // Умножение длинных чисел
     const int N = 4, A = 8; // длина и кол-во чисел
     const int pair = A / 2 + 1;
     bool even = 1;
@@ -129,11 +129,11 @@ int main(int argc, char* argv[])
 
     int ProcNum, ProcRank;
     MPI_Status Status;
-    //Инициализация среды
+    // Инициализация среды
     MPI_Init(&argc, &argv);
-    //Определение кол-ва процессов
+    // Определение кол-ва процессов
     MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-    //Определение ранга процесса
+    // Определение ранга процесса
     MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
     if (ProcNum < pair)
