@@ -44,7 +44,7 @@ void MultiplicationMatrix(struct Complex* A, struct Complex* B, Complex* D, int 
 int main(int argc, char* argv[])
 {
 	//Умножение комплексных матриц
-	int N = 3, A = 10; // N - размер матрицы, А - кол-во матриц
+	int N = 2, A = 4; // N - размер матрицы, А - кол-во матриц
 	int pair = A / 2 + 1;
 	bool even = 1;
 	if (A % 2 == 1)
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
 	// Заполнение матрицы и рассылка всем процессам
 	if (ProcRank == 0)
 	{
-		printf("  Matrix %d*%d (%d)\n", N, N, A);
+		printf("\n  Matrix %d*%d (%d times):\n", N, N, A);
 		for (int i = 0; i < N * N; i++)
 		{
 			matrix1[i].Re = 1 + rand() % 5;
@@ -152,16 +152,7 @@ int main(int argc, char* argv[])
 				matrix1[i].Re = array[N * N + i].Re;
 				matrix1[i].Im = array[N * N + i].Im;
 			}
-		}
-		else // Добавляем нечётную
-		{
-			for (int i = 0; i < N * N; i++)
-			{
-				// Пришедшую с 0го процесса
-				matrix1[i].Re = array[i].Re;
-				matrix1[i].Im = array[i].Im;
-			}
-		}
+		} // Иначе берём начальную матрицу matrix1
 
 		// Перемножаем результирующие матрицы
 		for (int i = even + 1; i < pair; i++)
@@ -179,6 +170,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		printf("\n  Result Matrix:\n");
 		for (int i = 0; i < N; i++)
 			for (int j = 0; j < N; j++)
 				printf("  Re,Im[%d] - (%d,%d)\n", i * N + j, matrix1[i * N + j].Re, matrix1[i * N + j].Im);
