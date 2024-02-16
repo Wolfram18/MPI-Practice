@@ -1,4 +1,5 @@
 # Several demo programs with MPI
+MPI is a directory of C++ programs which illustrate the use of the Message Passing Interface for parallel programming. MPI allows a user to write a program in a familiar language, such as C, C++, FORTRAN, or Python, and carry out a computation in parallel on an arbitrary number of cooperating computers.  
 
 Function "Ring": 
 - 0 --> 1, 1 --> 2, 2 --> 3 and etc. --> 1;
