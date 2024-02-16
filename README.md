@@ -11,3 +11,8 @@ Multiplication:
 - complex matrix multiplication;
 - multiplication of long numbers by the Karatsuba method;
 - multiplication of long numbers by the Schonhage-Strassen multiplication method.  
+
+Calculating Pi:
+- the quadrature formula of middle rectangles;
+- the trapezoidal quadrature formula;
+- Simpson's quadrature formula.
