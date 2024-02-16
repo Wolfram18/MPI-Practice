@@ -16,5 +16,7 @@ Calculating Pi:
 - the quadrature formula of middle rectangles;
 - the trapezoidal quadrature formula;
 - Simpson's quadrature formula.
+##
 ![1.jpg](img/1.jpg)
+##
 ![2.jpg](img/2.jpg)
