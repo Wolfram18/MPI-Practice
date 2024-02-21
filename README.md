@@ -5,7 +5,9 @@ Function "Ring":
 - 0 --> 1, 1 --> 2, 2 --> 3 and etc. --> 1;
 - it repeats optional amount of times;
 - using the Point-To-Point or the Collective communication pattern;
-- prints final values on threads and then sum them up (with the Collective pattern).
+- prints final values on threads and then sum them up (with the Collective pattern);
+- waiting for the number of repetitions to be entered;
+- by default the Ring function is repeated once (1).
 
 Multiplication:
 - complex matrix multiplication;
