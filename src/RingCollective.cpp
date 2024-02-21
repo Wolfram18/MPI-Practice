@@ -1,67 +1,85 @@
-#define MSMPI_NO_DEPRECATE_20
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <clocale>
+#include <locale.h>
 #include "mpi.h"
+
+void help()
+{
+	printf("\n Function \"Ring\": 0 --> 1, 1-->2, 2-->3 and etc. --> 1");
+	printf("\n using the Collective communication pattern.");
+        printf("\n It repeats optional amount of times");
+        printf("\n and prints final values on threads and then sum them up.");
+        printf("\n\n Waiting for the number of repetitions to be entered.");
+	printf("\n By default the Ring function is repeated once (1).");
+}
 
 int main(int argc, char* argv[])
 {
-	//Функция Ring, проходит ring раз
-	//Выводятся итоговые значения на потоках
-	//Потом суммируются 
-	int ring = 2; //Число повторов
-	int ProcNum, ProcRank, ProcFrom, ProcTo;
+	help();
+	int count = (argc == 2) ? atoi(argv[1]) : 1;
+	int from, to;
 	MPI_Status Status;
-	//char mess[] = "abcdef";
+	//char mess[] = "openmpi";
 	//char recv[10];
 	int mess = 0, recv = 0, sum = 0;
 	int num[10];
 
+	// Initialize the MPI environment
 	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-	MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
-	if (ProcRank == 0)
+	// Get the number of processes
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+	// Get the rank of the process
+	int world_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+	if (world_rank == 0)
 	{
-		//Действия, выполняемые только процессом с рангом 0
 		MPI_Send(&mess, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
-		printf("\n Start send:  %d -> %d", ProcRank, 1);
+		printf("\n Start send from root:  %d -> %d", world_rank, 1);
 	}
-	else //Сообщение, отправляемое всеми процессами, кроме процесса с рангом 0
-	{
-		for (int i = 0; i < ring; i++)
-		{
-			if (i > 0 && ProcRank == 1)
-				ProcFrom = ProcNum - 1;
-			else
-				ProcFrom = ProcRank - 1;
-			MPI_Recv(&recv, 1, MPI_INT, ProcFrom, 0, MPI_COMM_WORLD, &Status);
-			recv++;
-			printf("\n Recv[%d]:  %d -> %d, %d+1", i, ProcFrom, ProcRank, recv - 1);
+	MPI_Barrier(MPI_COMM_WORLD);
 
-			if (ProcRank == ProcNum - 1)
-				ProcTo = 1;
+	if (world_rank != 0)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			if (i > 0 && world_rank == 1)
+				from = world_size - 1;
 			else
-				ProcTo = ProcRank + 1;
-			MPI_Send(&recv, 1, MPI_INT, ProcTo, 0, MPI_COMM_WORLD);
-			printf("\n Send[%d]:  %d -> %d", i, ProcRank, ProcTo);
+				from = world_rank - 1;
+			MPI_Recv(&recv, 1, MPI_INT, from, 0, MPI_COMM_WORLD, &Status);
+			recv++;
+			printf("\n Recv (round %d):  %d -> %d, %d+1", i, from, world_rank, recv - 1);
+
+			if (world_rank == world_size - 1)
+				to = 1;
+			else
+				to = world_rank + 1;
+			MPI_Send(&recv, 1, MPI_INT, to, 0, MPI_COMM_WORLD);
+			printf("\n Send (round %d):  %d -> %d", i, world_rank, to);
 		}
 	}
 
-	//Собираем последние результаты на процессах
+	// Gathers together values from a group of processes
 	MPI_Gather(&recv, 1, MPI_INT, &num, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	//Ждем все процессы
 	MPI_Barrier(MPI_COMM_WORLD);
-	printf("\n Result: ");
-	if (ProcRank == 0)
-		for (int i = 0; i < ProcNum; i++)
-			printf("%d, ", num[i]);
 
-	//Суммируем последние результаты на процессах
+	if (world_rank == 0)
+	{
+		printf("\n Result: ");
+		for (int i = 0; i < world_size; i++)
+			printf("%d, ", num[i]);
+	}
+
+	// Reduces values on all processes to a single value
 	MPI_Reduce(&recv, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
-	if (ProcRank == 0)
+
+	if (world_rank == 0)
 		printf("\n Result = %d", sum);
 
 	MPI_Finalize();
