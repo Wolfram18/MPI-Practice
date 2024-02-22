@@ -6,15 +6,15 @@ Function "Ring":
 - it repeats optional amount of times;
 - using the Point-To-Point or the Collective communication pattern;
 - prints final values on threads and then sum them up (with the Collective pattern);
-- waiting for the number of repetitions to be entered;
+- the number of repetitions can be specified after the program name at startup;
 - by default the Ring function is repeated once (1).
 
 Multiplication:
 - complex matrix multiplication;
 - multiplication of long numbers by the Karatsuba method;
-- multiplication of long numbers by the Schonhage-Strassen multiplication method.  
+- multiplication of long numbers by the Schonhage-Strassen method.
 
-Calculating Pi:
+Approximate calculation of Pi using:
 - the quadrature formula of middle rectangles;
 - the trapezoidal quadrature formula;
 - Simpson's quadrature formula.
