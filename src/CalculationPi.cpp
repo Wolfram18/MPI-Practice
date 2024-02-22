@@ -27,38 +27,38 @@ double f(double x)
     return 1/(1+x*x);
 }
 
-double rectangle_method(int N, int world_size, int world_rank) 
+double rectangle_method(int N, int world_size, int world_rank)
 {
-	double h, sum = 0;
-	int a = 0, b = 1;
-	h = 1.0 / N;
-	for (int i = world_rank + 1; i <= N; i += world_size)
-		sum += f(a + h * (i - 0.5));
-	return 4 * h * sum;
+    double h, sum = 0;
+    int a = 0, b = 1;
+    h = 1.0 / N;
+    for (int i = world_rank + 1; i <= N; i += world_size)
+        sum += f(a + h * (i - 0.5));
+    return 4 * h * sum;
 }
 
-double trapezoidal_method(int N, int world_size, int world_rank) 
+double trapezoidal_method(int N, int world_size, int world_rank)
 {
-	double h, sum = 0;
-	int a = 0, b = 1;
-	h = 1.0 / N;
-	for (int i = world_rank + 1; i < N; i += world_size)
-		sum += f(a + i * h);
-	return 4 * h * ((f(a) + f(b)) / 2 + sum);
+    double h, sum = 0;
+    int a = 0, b = 1;
+    h = 1.0 / N;
+    for (int i = world_rank + 1; i < N; i += world_size)
+        sum += f(a + i * h);
+    return 4 * h * ((f(a) + f(b)) / 2 + sum);
 }
 
-double simpson_method(int N, int world_size, int world_rank) 
+double simpson_method(int N, int world_size, int world_rank)
 {
-	double h, sum = 0, summ = 0;
-	int a = 0, b = 1;
-	h = 1.0 / N;
-	for (int i = world_rank + 1; i < N; i += world_size)
-	{
-		sum += f(a + h * (i - 0.5));
-		summ += f(a + i * h);
-	}
-	sum += f(a + h * (N - 0.5));
-	return 4 * (h / 3) * ((f(a) + f(b)) / 2 + (2 * sum) + summ);
+    double h, sum = 0, summ = 0;
+    int a = 0, b = 1;
+    h = 1.0 / N;
+    for (int i = world_rank + 1; i < N; i += world_size)
+    {
+        sum += f(a + h * (i - 0.5));
+        summ += f(a + i * h);
+    }
+    sum += f(a + h * (N - 0.5));
+    return 4 * (h / 3) * ((f(a) + f(b)) / 2 + (2 * sum) + summ);
 }
 
 int main(int argc, char *argv[])
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     // Broadcasts a message from the process with rank "root"
     // to all other processes of the communicator
     MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     if (method == 1)
         term = rectangle_method(N, world_size, world_rank);
     else if (method == 2)
