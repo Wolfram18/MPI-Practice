@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <time.h>
 #include <mpi.h>
 
@@ -16,16 +17,48 @@ void help()
 
 double f(double x)
 {
-	return 1 / (1 + x * x);
+    return 1 / (1 + x * x);
+}
+
+double rectangle_method(int N, int world_size, int world_rank) 
+{
+    double h, sum = 0;
+    int a = 0, b = 1;
+    h = 1.0 / N;
+    for (int i = world_rank + 1; i <= N; i += world_size)
+        sum += f(a + h * (i - 0.5));
+    return 4 * h * sum;
+}
+
+double trapezoidal_method(int N, int world_size, int world_rank) 
+{
+    double h, sum = 0;
+    int a = 0, b = 1;
+    h = 1.0 / N;
+    for (int i = world_rank + 1; i < N; i += world_size)
+        sum += f(a + i * h);
+    return 4 * h * ((f(a) + f(b)) / 2 + sum);
+}
+
+double simpson_method(int N, int world_size, int world_rank) 
+{
+    double h, sum = 0, summ = 0;
+    int a = 0, b = 1;
+    h = 1.0 / N;
+    for (int i = world_rank + 1; i < N; i += world_size)
+    {
+        sum += f(a + h * (i - 0.5));
+        summ += f(a + i * h);
+    }
+    sum += f(a + h * (N - 0.5));
+    return 4 * (h / 3) * ((f(a) + f(b)) / 2 + (2 * sum) + summ);
 }
 
 int main(int argc, char* argv[])
 {
-	int N = (argc == 2) ? atoi(argv[1]) : DEFAULT_N;
-	int i, a = 0, b = 1;
-	double MyPi, sum = 0, summ = 0, term, h;
+    int N = (argc == 2) ? atoi(argv[1]) : DEFAULT_N;
+    double MyPi, term;
     clock_t StartClock, EndClock;
-    StartClock = clock();
 
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
@@ -38,50 +71,31 @@ int main(int argc, char* argv[])
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
+    StartClock = clock();
     // Broadcasts a message from the process with rank "root"
     // to all other processes of the communicator
-	MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-	// метод средних прямоугольников
-	h = 1.0 / N;
-	for (i = world_rank + 1; i <= N; i += world_size)
-		sum += f(a + h * (i - 0.5));
-	term = 4 * h * sum;
+    term = rectangle_method(N, world_size, world_rank);
+    //term = trapezoidal_method(N, world_size, world_rank);
+    //term = simpson_method(N, world_size, world_rank);
 
-	// метод трапеций
-	/*h = 1.0 / N;
-	for (i = world_rank + 1; i < N; i += world_size)
-		sum += f(a + i * h);
-	term = 4 * h * ((f(a) + f(b)) / 2 + sum);*/
+    // Reduces values on all processes to a single value
+    MPI_Reduce(&term, &MyPi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-	// метод Симпсона
-	/*h = 1.0 / N;
-	for (i = world_rank + 1; i < N; i += world_size)
-	{
-		sum += f(a + h * (i - 0.5));
-		summ += f(a + i * h);
-	}
-	sum += f(a + h * (N - 0.5));
-	term = 4 * (h / 3) * ((f(a) + f(b)) / 2 + (2 * sum) + summ);*/
-
-	
-
-	// Reduces values on all processes to a single value
-	MPI_Reduce(&term, &MyPi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	
-	if (world_rank == 0)
-	{
-		EndClock = clock();
+    if (world_rank == 0)
+    {
+        EndClock = clock();
         help();
-		printf("\n Number of iterations = %d", N);
-		printf("\n Computed value of Pi = %3.20f", MyPi);
+        printf("\n Number of iterations = %d", N);
+        printf("\n Computed value of Pi = %3.20f", MyPi);
         printf("\n Reference value of Pi = %3.20f", PI);
-        printf("\n Error = %3.20f", abs(MyPi - PI));
+        printf("\n Error = %3.20f", fabs(MyPi - PI));
         double TotalTime;
         TotalTime = (double)(EndClock - StartClock) / CLOCKS_PER_SEC;
         printf("\n Computing time = %f sec\n", TotalTime);
-	}
+    }
 	
-	MPI_Finalize();
-	return 0;
-}
+    MPI_Finalize();
+    return 0;
+} 
