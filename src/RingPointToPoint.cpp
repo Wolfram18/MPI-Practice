@@ -4,21 +4,22 @@
 #include <locale.h>
 #include "mpi.h"
 
+#define DEFAULT_COUNT 1
 #define _countof(a) (sizeof(a)/sizeof(*(a)))
 
 void help()
 {
-	printf("\n Function \"Ring\": 0 --> 1, 1-->2, 2-->3 and etc. --> 1");
+	printf("\n\n Function \"Ring\": 0 --> 1, 1-->2, 2-->3 and etc. --> 1");
 	printf("\n using the Point-To-Point communication pattern.");
-        printf("\n It repeats optional amount of times.");
-        printf("\n\n Waiting for the number of repetitions to be entered.");
-	printf("\n By default the Ring function is repeated once (1).");
+	printf("\n It repeats optional amount of times.");
+	printf("\n\n The number of repetitions (the \"count\" parameter)");
+	printf("\n can be specified after the program name at startup.");
+	printf("\n By default the number of repetitions the \"Ring\" function is: %d.\n", DEFAULT_COUNT);
 }
 
 int main(int argc, char* argv[])
 {
-	help();
-	int count = (argc == 2) ? atoi(argv[1]) : 1;
+	int count = (argc == 2) ? atoi(argv[1]) : DEFAULT_COUNT;
 	int from, to;
 	MPI_Status Status;
 	char mess[] = "openmpi";
@@ -36,6 +37,9 @@ int main(int argc, char* argv[])
 	int world_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
+	if (world_rank == 0) help();
+	MPI_Barrier(MPI_COMM_WORLD);
+	
 	// Get the name of the processor
 	char processor_name[MPI_MAX_PROCESSOR_NAME];
 	int name_len;
