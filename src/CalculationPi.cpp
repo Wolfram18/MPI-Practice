@@ -9,7 +9,8 @@
 
 void help()
 {
-    printf("\n Approximate calculation of Pi.");
+    printf("\n Approximate calculation of Pi");
+    printf("\n using the definite integral method.");
     printf("\n\n The number of iterations (the \"N\" parameter)");
     printf("\n can be specified after the program name at startup.");
     printf("\n By default the number of iterations is: %d.\n", DEFAULT_N);
