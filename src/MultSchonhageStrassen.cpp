@@ -1,4 +1,3 @@
-#define MSMPI_NO_DEPRECATE_20
 #include <complex>
 #include <vector>
 #include <cmath>
