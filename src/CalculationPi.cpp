@@ -1,10 +1,18 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
-#include <chrono>
+#include <stdlib.h>
+#include <time.h>
 #include <mpi.h>
-using namespace std;
 
-#define PI 3.141592653589793
+#define DEFAULT_N 100
+#define PI 3.1415926535897932384626433832795
+
+void help()
+{
+    printf("\n Approximate calculation of Pi.");
+    printf("\n\n The number of iterations (the \"N\" parameter)");
+    printf("\n can be specified after the program name at startup.");
+    printf("\n By default the number of iterations is: %d.\n", DEFAULT_N);
+}
 
 double f(double x)
 {
@@ -13,54 +21,65 @@ double f(double x)
 
 int main(int argc, char* argv[])
 {
-	double pi, sum = 0, summ = 0, term, h, eps;
-	int myrank, nprocs, n, i, a = 0, b = 1;
+	int N = (argc == 2) ? atoi(argv[1]) : DEFAULT_N;
+	int i, a = 0, b = 1;
+	double MyPi, sum = 0, summ = 0, term, h;
+    clock_t StartClock, EndClock;
+    StartClock = clock();
 
-	MPI_Init(&argc, &argv);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-	if (myrank == 0)
-	{
-		printf("Number of iterations = ");
-		scanf("%d", &n);
-	}
+    // Initialize the MPI environment
+    MPI_Init(&argc, &argv);
 
-	auto start = chrono::system_clock::now();
-	MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	// формула средних прямоугольников
-	/*h = 1.0 / n;
-	for (i = myrank + 1; i <= n; i += nprocs)
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+    // Broadcasts a message from the process with rank "root"
+    // to all other processes of the communicator
+	MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	// метод средних прямоугольников
+	h = 1.0 / N;
+	for (i = world_rank + 1; i <= N; i += world_size)
 		sum += f(a + h * (i - 0.5));
-	term = 4 * h * sum;*/
+	term = 4 * h * sum;
 
-	// формула трапеций
-	/*h = 1.0 / n;
-	for (i = myrank + 1; i < n; i += nprocs)
-		summ += f(a + i * h);
-	term = 4 * h * ((f(a) + f(b)) / 2 + summ);*/
+	// метод трапеций
+	/*h = 1.0 / N;
+	for (i = world_rank + 1; i < N; i += world_size)
+		sum += f(a + i * h);
+	term = 4 * h * ((f(a) + f(b)) / 2 + sum);*/
 
-	// формула Симпсона
-	h = 1.0 / n;
-	for (i = myrank + 1; i < n; i += nprocs)
+	// метод Симпсона
+	/*h = 1.0 / N;
+	for (i = world_rank + 1; i < N; i += world_size)
 	{
 		sum += f(a + h * (i - 0.5));
 		summ += f(a + i * h);
 	}
-	sum += f(a + h * (n - 0.5));
-	term = 4 * (h / 3) * ((f(a) + f(b)) / 2 + (2 * sum) + summ);
+	sum += f(a + h * (N - 0.5));
+	term = 4 * (h / 3) * ((f(a) + f(b)) / 2 + (2 * sum) + summ);*/
 
-	MPI_Reduce(&term, &pi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	auto stop = chrono::system_clock::now();
 	
-	if (myrank == 0)
+
+	// Reduces values on all processes to a single value
+	MPI_Reduce(&term, &MyPi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	
+	if (world_rank == 0)
 	{
-		eps = abs(pi - PI);
-		printf("Standard value of pi = %.16lg\n", PI);
-		printf("Computed value of pi = %.16lg\n", pi);
-		printf("Calculation accuracy of pi = %lg\n", eps);
-		chrono::duration<double> elaps = (stop - start);
-		printf("Calculation time of pi = %lg\n", elaps.count());
+		EndClock = clock();
+        help();
+		printf("\n Number of iterations = %d", N);
+		printf("\n Computed value of Pi = %3.20f", MyPi);
+        printf("\n Reference value of Pi = %3.20f", PI);
+        printf("\n Error = %3.20f", abs(MyPi - PI));
+        double TotalTime;
+        TotalTime = (double)(EndClock - StartClock) / CLOCKS_PER_SEC;
+        printf("\n Computing time = %f sec\n", TotalTime);
 	}
 	
 	MPI_Finalize();
