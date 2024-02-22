@@ -1,4 +1,3 @@
-#define MSMPI_NO_DEPRECATE_20
 #include <cstring>
 #include <stdlib.h>
 #include <stdio.h>
