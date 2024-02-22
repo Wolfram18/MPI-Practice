@@ -5,13 +5,13 @@
 #include "mpi.h"
 
 #define DEFAULT_COUNT 1
-#define _countof(a) (sizeof(a)/sizeof(*(a)))
 
 void help()
 {
 	printf("\n\n Function \"Ring\": 0 --> 1, 1-->2, 2-->3 and etc. --> 1");
-	printf("\n using the Point-To-Point communication pattern.");
-	printf("\n It repeats optional amount of times.");
+	printf("\n using the Collective communication pattern.");
+	printf("\n It repeats optional amount of times");
+	printf("\n and prints final values on threads and then sum them up.");
 	printf("\n\n The number of repetitions (the \"count\" parameter)");
 	printf("\n can be specified after the program name at startup.");
 	printf("\n By default the number of repetitions the \"Ring\" function is: %d.\n", DEFAULT_COUNT);
@@ -22,9 +22,10 @@ int main(int argc, char* argv[])
 	int count = (argc == 2) ? atoi(argv[1]) : DEFAULT_COUNT;
 	int from, to;
 	MPI_Status Status;
-	char mess[] = "openmpi";
-	char recv[10];
-	//int mess = 5, recv = 0;
+	//char mess[] = "openmpi";
+	//char recv[10];
+	int mess = 0, recv = 0, sum = 0;
+	int num[10];
 
 	// Initialize the MPI environment
 	MPI_Init(&argc, &argv);
@@ -37,22 +38,10 @@ int main(int argc, char* argv[])
 	int world_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-	if (world_rank == 0) help();
-	MPI_Barrier(MPI_COMM_WORLD);
-	
-	// Get the name of the processor
-	char processor_name[MPI_MAX_PROCESSOR_NAME];
-	int name_len;
-	MPI_Get_processor_name(processor_name, &name_len);
-
-	printf("\n Hello world from processor %s, rank %d"
-		" out of %d processors",
-		processor_name, world_rank, world_size);
-	MPI_Barrier(MPI_COMM_WORLD);
-
 	if (world_rank == 0)
 	{
-		MPI_Send(&mess, _countof(mess), MPI_CHAR, 1, 0, MPI_COMM_WORLD);
+		help();
+		MPI_Send(&mess, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
 		printf("\n Start send from root:  %d -> %d", world_rank, 1);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -65,17 +54,36 @@ int main(int argc, char* argv[])
 				from = world_size - 1;
 			else
 				from = world_rank - 1;
-			MPI_Recv(&recv, _countof(recv), MPI_CHAR, from, 0, MPI_COMM_WORLD, &Status);
-			printf("\n Recv (round %d):  %d -> %d, %s", i, from, world_rank, recv);
+			MPI_Recv(&recv, 1, MPI_INT, from, 0, MPI_COMM_WORLD, &Status);
+			recv++;
+			printf("\n Recv (round %d):  %d -> %d, %d+1", i, from, world_rank, recv - 1);
 
 			if (world_rank == world_size - 1)
 				to = 1;
 			else
 				to = world_rank + 1;
-			MPI_Send(&recv, _countof(recv), MPI_CHAR, to, 0, MPI_COMM_WORLD);
+			MPI_Send(&recv, 1, MPI_INT, to, 0, MPI_COMM_WORLD);
 			printf("\n Send (round %d):  %d -> %d", i, world_rank, to);
 		}
 	}
+
+	// Gathers together values from a group of processes
+	MPI_Gather(&recv, 1, MPI_INT, &num, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if (world_rank == 0)
+	{
+		printf("\n Result: ");
+		for (int i = 0; i < world_size; i++)
+			printf("%d, ", num[i]);
+	}
+
+	// Reduces values on all processes to a single value
+	MPI_Reduce(&recv, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	if (world_rank == 0)
+		printf("\n Result = %d\n", sum);
 
 	MPI_Finalize();
 	return 0;
